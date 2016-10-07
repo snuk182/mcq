@@ -1,28 +1,28 @@
-/* A Rust port of Java implementation of Median Cut Quantization algorithm. */
-/**
- * This sample code is made available as part of the book "Digital Image
- * Processing - An Algorithmic Introduction using Java" by Wilhelm Burger
- * and Mark J. Burge, Copyright (C) 2005-2008 Springer-Verlag Berlin, 
- * Heidelberg, New York.
- * Note that this code comes with absolutely no warranty of any kind.
- * See http://www.imagingbook.com for details and licensing conditions.
- * 
- * Date: 2007/11/10
- */
-/*
- * This is an implementation of Heckbert's median-cut color quantization algorithm 
- * (Heckbert P., "Color Image Quantization for Frame Buffer Display", ACM Transactions
- * on Computer Graphics (SIGGRAPH), pp. 297-307, 1982).
- * Unlike in the original algorithm, no initial uniform (scalar) quantization is used to
- * for reducing the number of image colors. Instead, all colors contained in the original
- * image are considered in the quantization process. After the set of representative
- * colors has been found, each image color is mapped to the closest representative
- * in RGB color space using the Euclidean distance.
- * The quantization process has two steps: first a ColorQuantizer object is created from
- * a given image using one of the constructor methods provided. Then this ColorQuantizer
- * can be used to quantize the original image or any other image using the same set of 
- * representative colors (color table).
- */
+// A Rust port of Java implementation of Median Cut Quantization algorithm.
+
+// This sample code is made available as part of the book "Digital Image
+// Processing - An Algorithmic Introduction using Java" by Wilhelm Burger
+// and Mark J. Burge, Copyright (C) 2005-2008 Springer-Verlag Berlin,
+// Heidelberg, New York.
+// Note that this code comes with absolutely no warranty of any kind.
+// See http://www.imagingbook.com for details and licensing conditions.
+//
+// Date: 2007/11/10
+//
+
+// This is an implementation of Heckbert's median-cut color quantization algorithm
+// (Heckbert P., "Color Image Quantization for Frame Buffer Display", ACM Transactions
+// on Computer Graphics (SIGGRAPH), pp. 297-307, 1982).
+// Unlike in the original algorithm, no initial uniform (scalar) quantization is used to
+// for reducing the number of image colors. Instead, all colors contained in the original
+// image are considered in the quantization process. After the set of representative
+// colors has been found, each image color is mapped to the closest representative
+// in RGB color space using the Euclidean distance.
+// The quantization process has two steps: first a ColorQuantizer object is created from
+// a given image using one of the constructor methods provided. Then this ColorQuantizer
+// can be used to quantize the original image or any other image using the same set of
+// representative colors (color table).
+//
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum ColorDimension {
@@ -94,9 +94,9 @@ impl ColorBox {
 
             ..Default::default()
         };
-        
+
         b.trim(colors);
-        
+
         b
     }
 
@@ -150,8 +150,7 @@ impl ColorBox {
             // find median along dim
             let med = self.find_median(dim, colors);
 
-            // now split this box at the median return the resulting new
-            // box.
+            // now split this box at the median return the resulting new box.
             let next_level = self.level + 1;
             let new_box = ColorBox::new(med + 1, self.upper, next_level, colors);
             self.upper = med;
@@ -165,30 +164,30 @@ impl ColorBox {
         let r_length = self.rmax - self.rmin;
         let g_length = self.gmax - self.gmin;
         let b_length = self.bmax - self.bmin;
-        
+
         if b_length >= r_length && b_length >= g_length {
             ColorDimension::Blue
         } else if g_length >= r_length && g_length >= b_length {
             return ColorDimension::Green;
         } else {
-	        ColorDimension::Red
-	    }
+            ColorDimension::Red
+        }
     }
 
     fn find_median(&self, dim: ColorDimension, colors: &mut Vec<ColorNode>) -> usize {
         // sort color in this box along dimension dim:
         match dim {
-            ColorDimension::Red => colors[self.lower..(self.upper+1)].sort_by(|a, b| a.red.cmp(&b.red)),
-            ColorDimension::Green => colors[self.lower..(self.upper+1)].sort_by(|a, b| a.grn.cmp(&b.grn)),
-            ColorDimension::Blue => colors[self.lower..(self.upper+1)].sort_by(|a, b| a.blu.cmp(&b.blu)),
+            ColorDimension::Red => colors[self.lower..(self.upper + 1)].sort_by(|a, b| a.red.cmp(&b.red)),
+            ColorDimension::Green => colors[self.lower..(self.upper + 1)].sort_by(|a, b| a.grn.cmp(&b.grn)),
+            ColorDimension::Blue => colors[self.lower..(self.upper + 1)].sort_by(|a, b| a.blu.cmp(&b.blu)),
         }
-        
+
         // find the median point:
         let half = self.count / 2;
         let mut n_pixels = 0;
         // for (median = lower, n_pixels = 0; median < upper; median++) {
         for median in self.lower..self.upper {
-        	n_pixels = n_pixels + colors[median].cnt;
+            n_pixels = n_pixels + colors[median].cnt;
             if n_pixels >= half {
                 return median;
             }
@@ -250,7 +249,7 @@ impl ColorHistogram {
                 inited = true;
             }
         }
-        
+
         // tabulate and count unique colors:
         let mut color_array = Vec::with_capacity(k);
         let mut count_array = Vec::with_capacity(k);
@@ -266,7 +265,7 @@ impl ColorHistogram {
                 inited = true;
                 k += 1;
             } else {
-            	count_array[k-1] += 1;
+                count_array[k - 1] += 1;
             }
         }
         ColorHistogram::new(color_array, count_array)
@@ -279,24 +278,24 @@ pub struct MMCQ {
 }
 
 impl MMCQ {
-	pub fn from_pixels_u8_rgba(pixels: &[u8], k_max: u32) -> MMCQ {
-		let pixels = unsafe { ::std::slice::from_raw_parts::<u32>(::std::mem::transmute(&pixels[0]), pixels.len() / 4) };
-		
-		MMCQ::from_pixels_u32_rgba(pixels, k_max)
-	}
-	
+    pub fn from_pixels_u8_rgba(pixels: &[u8], k_max: u32) -> MMCQ {
+        let pixels = unsafe { ::std::slice::from_raw_parts::<u32>(::std::mem::transmute(&pixels[0]), pixels.len() / 4) };
+
+        MMCQ::from_pixels_u32_rgba(pixels, k_max)
+    }
+
     pub fn from_pixels_u32_rgba(pixels: &[u32], k_max: u32) -> MMCQ {
         let mut m = MMCQ {
-		    image_colors: Vec::new(),
-		    quant_colors: Vec::new(),
-		};
-		
-		m.quant_colors = m.find_representative_colors(&pixels, k_max);
-		m.quant_colors.sort_by(|a,b| b.cnt.cmp(&a.cnt));
-		
-		m
+            image_colors: Vec::new(),
+            quant_colors: Vec::new(),
+        };
+
+        m.quant_colors = m.find_representative_colors(&pixels, k_max);
+        m.quant_colors.sort_by(|a, b| b.cnt.cmp(&a.cnt));
+
+        m
     }
-    
+
     pub fn get_quantized_colors(&self) -> &Vec<ColorNode> {
         &self.quant_colors
     }
@@ -320,14 +319,14 @@ impl MMCQ {
             let cnt = color_hist.count_array[i];
             self.image_colors.push(ColorNode::new_rgb(rgb, cnt));
         }
-        
-        //println!("{:?}", self.image_colors);
+
+        // println!("{:?}", self.image_colors);
 
         let r_cols = if cnum <= k_max as usize {
             // image has fewer colors than k_max
             self.image_colors.clone()
         } else {
-        	let initial_box = ColorBox::new(0, cnum - 1, 0, &mut self.image_colors);
+            let initial_box = ColorBox::new(0, cnum - 1, 0, &mut self.image_colors);
             let mut color_set = Vec::new();
             color_set.push(initial_box);
             let mut k = 1;
@@ -339,13 +338,13 @@ impl MMCQ {
                     done = true;
                     None
                 };
-                
+
                 if let Some(new_box) = new_box {
                     color_set.push(new_box);
                     k = k + 1;
                 }
             }
-            
+
             self.average_colors(&color_set)
         };
         r_cols
@@ -377,9 +376,9 @@ impl MMCQ {
         let n = color_boxes.len();
         let mut avg_colors = Vec::with_capacity(n);
         for b in color_boxes {
-        	//println!("color box {:?}", b);
+            // println!("color box {:?}", b);
             avg_colors.push(b.get_average_color(&mut self.image_colors));
-            //println!("avg {:?}", avg_colors[avg_colors.len()-1]);
+            // println!("avg {:?}", avg_colors[avg_colors.len()-1]);
         }
         return avg_colors;
     }
@@ -393,7 +392,7 @@ impl MMCQ {
             if b.color_count() >= 2 {
                 // box can be split
                 if b.level < min_level {
-                	min_level = b.level;
+                    min_level = b.level;
                     box_to_split = Some(b);
                 }
             }
