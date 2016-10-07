@@ -30,11 +30,19 @@ fn process_image(file: &str) {
         let img = image::load(BufReader::new(File::open(file).unwrap()), image::JPEG).unwrap().to_rgba();
         let data = img.into_vec();
 
+		// Here we extract the quantized colors from the image.
+		// We need no more than 16 colors (QUANT_SIZE).
         MMCQ::from_pixels_u8_rgba(data.as_slice(), QUANT_SIZE)
     };
 
+	// A `Vec` of colors, descendantely sorted by usage frequency  
     let qc = mcq.get_quantized_colors();
     // println!("Quantized {:?}", qc);
+    
+    // =============================================================================================
+    // Here we will demonstrate the extracted colors by generating the image 
+    // that consists of both original image and a resulted palette.
+    // =============================================================================================
 
     let img = image::load(BufReader::new(File::open(file).unwrap()), image::JPEG).unwrap().to_rgba();
     let (ix, iy) = img.dimensions();
